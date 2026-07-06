@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekly Pad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500&family=Pretendard:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #faf8f3;
+    --line: #e5e0d4;
+    --line-soft: #efece3;
+    --ink: #2b2a26;
+    --ink-faint: #a8a396;
+    --weekend: #b8503f;
+    --font-display: 'Fraunces', serif;
+    --font-ui: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --month-w: clamp(78px, 15vw, 132px);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; width:100%; overflow-x:hidden; background:transparent; }
+  body{
+    font-family: var(--font-ui);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: clamp(8px, 2vw, 16px);
+  }
+
+  .toolbar{
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(8px, 2vw, 14px);
+  }
+  .nav-btn{
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 14px;
+    width: 26px; height: 26px;
+    flex: 0 0 auto;
+    border-radius: 6px;
+    transition: background .12s ease, color .12s ease;
+  }
+  .nav-btn:hover{ background: var(--line-soft); color: var(--ink); }
+  .toolbar .range{
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .toolbar .today-btn{
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--ink);
+    background: var(--line-soft);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    flex: 0 0 auto;
+  }
+  .toolbar .today-btn:hover{ background: var(--line); }
+
+  .pad{
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: clamp(18px, 3.5vw, 40px) clamp(14px, 3vw, 36px);
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+  .pad::before{
+    content: "";
+    position: absolute;
+    left: var(--month-w);
+    top: 20px;
+    bottom: 20px;
+    width: 20px;
+    background: linear-gradient(to right, rgba(0,0,0,0.05), transparent 70%);
+    pointer-events: none;
+  }
+
+  .month-block{
+    flex: 0 0 var(--month-w);
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 4px;
+    overflow: hidden;
+  }
+  .month-block .num{
+    font-family: var(--font-display);
+    font-weight: 300;
+    font-size: clamp(30px, 7vw, 64px);
+    line-height: 1;
+    color: var(--ink);
+  }
+  .month-block .label{
+    font-family: var(--font-ui);
+    font-size: clamp(8px, 1.6vw, 11px);
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+  .month-block .sub{
+    font-family: var(--font-ui);
+    font-size: clamp(8px, 1.5vw, 10.5px);
+    color: var(--ink-faint);
+    margin-top: clamp(10px, 2.5vw, 24px);
+    line-height: 1.6;
+  }
+
+  .week-grid{
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    padding-left: clamp(10px, 2.5vw, 28px);
+  }
+  .day-col{
+    min-width: 0;
+    border-left: 1px solid var(--line-soft);
+    padding: 0 clamp(3px, 1vw, 12px);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .day-col:last-child{ border-right: 1px solid var(--line-soft); }
+
+  .day-head{
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .day-head .d-num{
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .day-head .d-name{
+    font-family: var(--font-ui);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .day-col.weekend .d-num,
+  .day-col.weekend .d-name{ color: var(--weekend); }
+  .day-col.today .day-head{ border-bottom-color: var(--ink); }
+
+  .tasks{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .task-line{
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--line-soft);
+    position: relative;
+  }
+  .checkbox{
+    flex: 0 0 auto;
+    width: 13px; height: 13px;
+    margin-top: 2px;
+    border-radius: 3px;
+    border: 1.5px solid #cdc9bd;
+    cursor: pointer;
+    position: relative;
+    background: #fff;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  .checkbox.checked{
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .checkbox.checked::after{
+    content:"";
+    position:absolute;
+    left:3.5px; top:0.5px;
+    width:3.5px; height:6.5px;
+    border-right:1.5px solid #fff;
+    border-bottom:1.5px solid #fff;
+    transform: rotate(40deg);
+  }
+  .task-line .txt{
+    flex: 1;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink);
+    word-break: keep-all;
+    cursor: default;
+  }
+  .task-line.done .txt{
+    color: var(--ink-faint);
+    text-decoration: line-through;
+  }
+  .task-line .del{
+    flex: 0 0 auto;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--ink-faint);
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity .12s ease;
+    padding: 0;
+  }
+  .task-line:hover .del{ opacity: 1; }
+  .task-line .del:hover{ color: var(--weekend); }
+
+  .add-line{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--line-soft);
+    cursor: text;
+  }
+  .add-line .plus{
+    flex: 0 0 auto;
+    width: 13px; height: 13px;
+    border-radius: 3px;
+    border: 1.5px dashed #cdc9bd;
+  }
+  .add-line input{
+    flex: 1;
+    border: none;
+    background: none;
+    outline: none;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--ink);
+    padding: 0;
+  }
+  .add-line input::placeholder{ color: var(--ink-faint); }
+
+  .footer-note{
+    width: 100%;
+    max-width: 900px;
+    margin: 16px auto 0;
+    font-family: var(--font-ui);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button class="nav-btn" id="prevWeek">◀</button>
+  <span class="range" id="rangeLabel"></span>
+  <button class="nav-btn" id="nextWeek">▶</button>
+  <button class="today-btn" id="todayBtn">오늘</button>
+</div>
+
+<div class="pad">
+  <div class="month-block">
+    <div class="num" id="bigNum">06</div>
+    <div class="label" id="monthLabel">July 2026</div>
+    <div class="sub" id="weekSub">이번 주</div>
+  </div>
+  <div class="week-grid" id="weekGrid"></div>
+</div>
+<div class="footer-note">일정을 입력하면 체크박스가 생겨요 · 체크하면 완료 표시(취소선)로 남고 지워지지 않아요</div>
+
+<script>
+const STORAGE_KEY = 'weekly_diary_v1';
+let tasks = []; // {id, date:'YYYY-MM-DD', text, done, color}
+let weekStart = getMonday(new Date());
+const DAY_NAMES = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function toDateStr(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function todayStr(){ return toDateStr(new Date()); }
+function getMonday(d){
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  date.setDate(date.getDate() + diff);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+async function loadTasks(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    tasks = raw ? JSON.parse(raw) : [];
+  }catch(e){ tasks = []; }
+  render();
+}
+async function saveTasks(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); }
+  catch(e){ console.error('저장 실패', e); }
+}
+
+function addTask(dateStr, text){
+  if(!text.trim()) return;
+  tasks.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    date: dateStr,
+    text: text.trim(),
+    done: false
+  });
+  saveTasks();
+  render();
+}
+function toggleTask(id){
+  const t = tasks.find(t => t.id === id);
+  if(t){ t.done = !t.done; saveTasks(); render(); }
+}
+function deleteTask(id){
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  render();
+}
+
+function render(){
+  const monday = weekStart;
+  const sunday = new Date(monday); sunday.setDate(sunday.getDate()+6);
+
+  document.getElementById('bigNum').textContent = pad(monday.getDate());
+  document.getElementById('monthLabel').textContent =
+    monday.toLocaleString('en-US', { month: 'long' }) + ' ' + monday.getFullYear();
+  document.getElementById('rangeLabel').textContent =
+    `${monday.getMonth()+1}.${monday.getDate()} – ${sunday.getMonth()+1}.${sunday.getDate()}`;
+
+  const today = todayStr();
+  const isThisWeek = toDateStr(getMonday(new Date())) === toDateStr(monday);
+  document.getElementById('weekSub').textContent = isThisWeek ? '이번 주' : '';
+
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = '';
+
+  for(let i=0; i<7; i++){
+    const d = new Date(monday); d.setDate(d.getDate()+i);
+    const dateStr = toDateStr(d);
+    const isWeekend = i >= 5;
+    const isToday = dateStr === today;
+
+    const col = document.createElement('div');
+    col.className = 'day-col' + (isWeekend ? ' weekend' : '') + (isToday ? ' today' : '');
+
+    const head = document.createElement('div');
+    head.className = 'day-head';
+    head.innerHTML = `<span class="d-num">${d.getDate()}</span><span class="d-name">${DAY_NAMES[i]}</span>`;
+    col.appendChild(head);
+
+    const taskWrap = document.createElement('div');
+    taskWrap.className = 'tasks';
+
+    const dayTasks = tasks.filter(t => t.date === dateStr);
+    dayTasks.forEach(t => {
+      const line = document.createElement('div');
+      line.className = 'task-line' + (t.done ? ' done' : '');
+
+      const cb = document.createElement('span');
+      cb.className = 'checkbox' + (t.done ? ' checked' : '');
+      cb.onclick = () => toggleTask(t.id);
+
+      const txt = document.createElement('span');
+      txt.className = 'txt';
+      txt.textContent = t.text;
+
+      const del = document.createElement('button');
+      del.className = 'del';
+      del.textContent = '✕';
+      del.onclick = () => deleteTask(t.id);
+
+      line.appendChild(cb);
+      line.appendChild(txt);
+      line.appendChild(del);
+      taskWrap.appendChild(line);
+    });
+
+    // add-new-task line
+    const addLine = document.createElement('div');
+    addLine.className = 'add-line';
+    const plus = document.createElement('span');
+    plus.className = 'plus';
+    const input = document.createElement('input');
+    input.placeholder = '일정 입력';
+    input.type = 'text';
+
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        addTask(dateStr, input.value);
+        input.value = '';
+      }
+    });
+
+    addLine.appendChild(plus);
+    addLine.appendChild(input);
+    taskWrap.appendChild(addLine);
+
+    col.appendChild(taskWrap);
+    grid.appendChild(col);
+  }
+}
+
+document.getElementById('prevWeek').addEventListener('click', () => {
+  weekStart = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()-7);
+  render();
+});
+document.getElementById('nextWeek').addEventListener('click', () => {
+  weekStart = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+7);
+  render();
+});
+document.getElementById('todayBtn').addEventListener('click', () => {
+  weekStart = getMonday(new Date());
+  render();
+});
+
+loadTasks();
+</script>
+</body>
+</html>
